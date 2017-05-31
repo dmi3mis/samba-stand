@@ -31,8 +31,17 @@ Vagrant.configure(2) do |config|
 			node.vm.usable_port_range = (2250..2300)
 			node.vm.hostname = machine[:hostname]
 
-			node.vm.network "public_network", ip: machine[:ip], bridge: 'eth0'
-			node.vm.network "private_network", ip: machine[:ip_int], virtualbox__intnet: "intnet"
+			if (machine[:ip] == "dhcp")
+				node.vm.network "public_network", bridge: 'eth0'
+			else
+				node.vm.network "public_network", ip: machine[:ip], netmask: 24, bridge: 'eth0'
+			end
+
+			if (machine[:ip_int] == "dhcp")
+				node.vm.network "private_network", virtualbox__intnet: "intnet"
+			else
+				node.vm.network "private_network", ip: machine[:ip_int], netmask: 24, virtualbox__intnet: "intnet"
+			end
 
 			args = [machine[:ip], machine[:ip_int], machine[:hostname]]
 			if (!machine[:nameserver].nil?)
