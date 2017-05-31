@@ -78,13 +78,18 @@ PASSWORD='Pa$$word'
 
 COMMON_TOOLS="bind-utils krb5-kinit"
 
+# Due https://bugzilla.altlinux.org/show_bug.cgi?id=33427
+COMMON_TOOLS+=" ldb-tools"
+
 case "$(hostname -s)" in
 	client)
 		apt-get install -y -qq samba-client sssd-ad $COMMON_TOOLS
 		apt-get clean
 		apt-get install -y -qq task-auth-ad-sssd
 		apt-get clean
+		test -z "$host_nameserver" || set_nameserver eth2 "$host_nameserver"
 		init_krb5_conf
+		source /etc/bashrc.d/ldb-modules.sh
 		system-auth write ad $DOMAIN $HOST $WORKGROUP 'Administrator' "$PASSWORD"
 		;;
 	server)
