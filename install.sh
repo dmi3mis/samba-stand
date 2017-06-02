@@ -170,6 +170,7 @@ case "$(hostname -s)" in
 		apt-get install -y -qq task-auth-ad-sssd
 		apt-get clean
 		init_krb5_conf "$REALM"
+		ln -s /usr/lib64/ldb/modules/ldb /usr/lib64/samba/ldb
 		if [ -n "$host_nameserver" ]; then
 			disable_networkmanager_dns
 			disable_dhcpcd_resolvconf_hook
