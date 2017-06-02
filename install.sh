@@ -58,11 +58,17 @@ get_ip()
 	echo "$ip"
 }
 
+disable_dhcpcd_resolvconf_hook()
+{
+	echo "nohook resolv.conf" >>/etc/dhcpcd.conf
+}
+
 pub_ip="$1"; shift
 host_ip="$1"; shift
 host_name="$1"; shift
 host_nameserver="${1-}"
 
+disable_dhcpcd_resolvconf_hook
 create_iface eth1 $(get_ip "$pub_ip")
 create_iface eth2 $(get_ip "$host_ip")
 set_hostname "$host_name"
