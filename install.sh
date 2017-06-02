@@ -95,7 +95,7 @@ case "$(hostname -s)" in
 		apt-get install -y -qq task-auth-ad-sssd
 		apt-get clean
 		init_krb5_conf
-		source /etc/bashrc.d/ldb-modules.sh
+		ln -s /usr/lib64/ldb/modules/ldb /usr/lib64/samba/ldb
 		test -z "$host_nameserver" || set_nameserver eth2 "$host_nameserver" "$DOMAIN"
 		system-auth write ad $DOMAIN $HOST $WORKGROUP 'Administrator' "$PASSWORD"
 		;;
