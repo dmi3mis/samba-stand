@@ -13,10 +13,6 @@ __EOF
 		echo "$1/24" > /etc/net/ifaces/$iface/ipv4address
 		shift
 	fi
-	if [ "nameserver" == "${1-}" ]; then
-		set_nameserver "$iface" "$2"
-		shift 2
-	fi
 	iface_restart $iface
 }
 
@@ -24,7 +20,12 @@ set_nameserver()
 {
 	local iface="$1"; shift
 	local nameserver="$1"; shift
-	echo "nameserver $nameserver" > /etc/net/ifaces/$iface/resolv.conf
+	local domain="${1-}"; shift
+	if [ -n "$domain" ]; then
+		echo "domain $domain" > /etc/net/ifaces/$iface/resolv.conf
+		echo "search $domain" >> /etc/net/ifaces/$iface/resolv.conf
+	fi
+	echo "nameserver $nameserver" >> /etc/net/ifaces/$iface/resolv.conf
 	grep -q "interface_order=.*$iface " /etc/resolvconf.conf || sed -i "s/interface_order='\(.*\)'/interface_order='$iface \1'/" /etc/resolvconf.conf
 	iface_restart $iface
 }
@@ -63,7 +64,7 @@ host_name="$1"; shift
 host_nameserver="${1-}"
 
 create_iface eth1 $(get_ip "$pub_ip")
-create_iface eth2 $(get_ip "$host_ip") $(test -z "$host_nameserver" || echo nameserver "$host_nameserver")
+create_iface eth2 $(get_ip "$host_ip")
 set_hostname "$host_name"
 
 apt-get update
@@ -87,9 +88,9 @@ case "$(hostname -s)" in
 		apt-get clean
 		apt-get install -y -qq task-auth-ad-sssd
 		apt-get clean
-		test -z "$host_nameserver" || set_nameserver eth2 "$host_nameserver"
 		init_krb5_conf
 		source /etc/bashrc.d/ldb-modules.sh
+		test -z "$host_nameserver" || set_nameserver eth2 "$host_nameserver" "$DOMAIN"
 		system-auth write ad $DOMAIN $HOST $WORKGROUP 'Administrator' "$PASSWORD"
 		;;
 	server)
@@ -98,7 +99,7 @@ case "$(hostname -s)" in
 		mv /etc/samba/smb.conf /etc/samba/smb.conf.saved
 		init_krb5_conf
 		samba-tool domain provision --realm="$REALM" --domain "$WORKGROUP" --adminpass="$PASSWORD" --dns-backend=SAMBA_INTERNAL --server-role=dc --use-rfc2307 --host-ip="$host_ip"
-		set_nameserver eth2 127.0.0.1
+		set_nameserver eth2 127.0.0.1 "$DOMAIN"
 		service samba start
 		chkconfig samba on
 		;;
