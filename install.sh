@@ -18,7 +18,7 @@ __EOF
 
 set_nameserver()
 {
-	local iface="$1"; shift
+	local iface="eth2"
 	local nameserver="$1"; shift
 	local domain="${1-}"; shift
 	if [ -n "$domain" ]; then
@@ -61,6 +61,8 @@ get_ip()
 disable_dhcpcd_resolvconf_hook()
 {
 	echo "nohook resolv.conf" >>/etc/dhcpcd.conf
+	iface_restart eth0
+	iface_restart eth1
 }
 
 pub_ip="$1"; shift
@@ -68,7 +70,6 @@ host_ip="$1"; shift
 host_name="$1"; shift
 host_nameserver="${1-}"
 
-disable_dhcpcd_resolvconf_hook
 create_iface eth1 $(get_ip "$pub_ip")
 create_iface eth2 $(get_ip "$host_ip")
 set_hostname "$host_name"
@@ -96,7 +97,10 @@ case "$(hostname -s)" in
 		apt-get clean
 		init_krb5_conf
 		ln -s /usr/lib64/ldb/modules/ldb /usr/lib64/samba/ldb
-		test -z "$host_nameserver" || set_nameserver eth2 "$host_nameserver" "$DOMAIN"
+		if [ -n "$host_nameserver" ]; then
+			disable_dhcpcd_resolvconf_hook
+			set_nameserver "$host_nameserver" "$DOMAIN"
+		fi
 		system-auth write ad $DOMAIN $HOST $WORKGROUP 'Administrator' "$PASSWORD"
 		;;
 	server)
@@ -105,7 +109,8 @@ case "$(hostname -s)" in
 		mv /etc/samba/smb.conf /etc/samba/smb.conf.saved
 		init_krb5_conf
 		samba-tool domain provision --realm="$REALM" --domain "$WORKGROUP" --adminpass="$PASSWORD" --dns-backend=SAMBA_INTERNAL --server-role=dc --use-rfc2307 --host-ip="$host_ip"
-		set_nameserver eth2 127.0.0.1 "$DOMAIN"
+		disable_dhcpcd_resolvconf_hook
+		set_nameserver 127.0.0.1 "$DOMAIN"
 		service samba start
 		chkconfig samba on
 		;;
