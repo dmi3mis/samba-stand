@@ -46,9 +46,9 @@ set_hostname()
 init_krb5_conf()
 {
 	local realm="$1"
-	sed -i "s/[#[:space:]]*default_realm\s*=\s*.*/        default_realm = $realm/" /etc/krb5.conf
-	sed -i "s/[#[:space:]]*dns_lookup_realm\s*=\s*.*/        dns_lookup_kdc = true/" /etc/krb5.conf
-	sed -i "s/\s*dns_lookup_realm\s*=\s*.*/        dns_lookup_realm = false/" /etc/krb5.conf
+	sed -i "s/\([#[:space:]]*default_realm\s*=\s*\).*/\1$realm/" /etc/krb5.conf
+	sed -i "s/\([#[:space:]]*dns_lookup_kdc\s*=\s*\).*/\1true/" /etc/krb5.conf
+	sed -i "s/\(\s*dns_lookup_realm\s*=\s*\).*/\1false/" /etc/krb5.conf
 }
 
 get_ip()
@@ -95,7 +95,7 @@ case "$(hostname -s)" in
 		apt-get clean
 		apt-get install -y -qq task-auth-ad-sssd
 		apt-get clean
-		init_krb5_conf
+		init_krb5_conf "$REALM"
 		ln -s /usr/lib64/ldb/modules/ldb /usr/lib64/samba/ldb
 		if [ -n "$host_nameserver" ]; then
 			disable_dhcpcd_resolvconf_hook
@@ -107,7 +107,7 @@ case "$(hostname -s)" in
 		apt-get install -y -qq samba-DC samba-DC-client $COMMON_TOOLS
 		apt-get clean
 		mv /etc/samba/smb.conf /etc/samba/smb.conf.saved
-		init_krb5_conf
+		init_krb5_conf "$REALM"
 		samba-tool domain provision --realm="$REALM" --domain "$WORKGROUP" --adminpass="$PASSWORD" --dns-backend=SAMBA_INTERNAL --server-role=dc --use-rfc2307 --host-ip="$host_ip"
 		disable_dhcpcd_resolvconf_hook
 		set_nameserver 127.0.0.1 "$DOMAIN"
