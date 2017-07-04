@@ -65,14 +65,17 @@ disable_dhcpcd_resolvconf_hook()
 	iface_restart eth1
 }
 
+compat="$1"; shift
 pub_ip="$1"; shift
 host_ip="$1"; shift
 host_name="$1"; shift
 host_nameserver="${1-}"
 
-create_iface eth1 $(get_ip "$pub_ip")
-create_iface eth2 $(get_ip "$host_ip")
-set_hostname "$host_name"
+if [ "$compat" == "true" ]; then
+	create_iface eth1 $(get_ip "$pub_ip")
+	create_iface eth2 $(get_ip "$host_ip")
+	set_hostname "$host_name"
+fi
 
 apt-get update
 apt-get dist-upgrade -y -qq
