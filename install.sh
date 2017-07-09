@@ -46,9 +46,9 @@ set_hostname()
 init_krb5_conf()
 {
 	local realm="$1"
-	sed -i "s/\([#[:space:]]*default_realm\s*=\s*\).*/\1$realm/" /etc/krb5.conf
-	sed -i "s/\([#[:space:]]*dns_lookup_kdc\s*=\s*\).*/\1true/" /etc/krb5.conf
-	sed -i "s/\(\s*dns_lookup_realm\s*=\s*\).*/\1false/" /etc/krb5.conf
+	sed -i "s/#\?\(\s*default_realm\s*=\s*\).*/\1$realm/" /etc/krb5.conf
+	sed -i "s/#\?\(\s*dns_lookup_kdc\s*=\s*\).*/\1true/" /etc/krb5.conf
+	sed -i "s/#\?\(\s*dns_lookup_realm\s*=\s*\).*/\1false/" /etc/krb5.conf
 }
 
 get_ip()
