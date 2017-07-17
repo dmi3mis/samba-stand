@@ -14,14 +14,21 @@ rescue
 	COMPAT=""
 end
 
+# Available ALT Platform p8 based boxes:
+# "mastersin/basealt-p8-server"
+# "mastersin/basealt-p8-server-systemd"
+# "mastersin/basealt-p8-workstation"
+
 hosts=[
 {
+	:box => "mastersin/basealt-p8-server-systemd",
 	:hostname => "server." + DOMAIN,
 	:ip => "dhcp", # PUBLIC_NET + "150"
 	:ip_int => PRIVATE_NET + "2",
 	:ram => 1000
 },
 {
+	:box => "mastersin/basealt-p8-workstation",
 	:hostname => "client." + DOMAIN,
 	:ip => "dhcp", # PUBLIC_NET + "151"
 	:ip_int => PRIVATE_NET + "3",
@@ -35,10 +42,7 @@ Vagrant.configure(2) do |config|
 
 	hosts.each do |machine|
 		config.vm.define machine[:hostname] do |node|
-			#node.vm.box = "mastersin/basealt-p8-server"
-			node.vm.box = "mastersin/basealt-p8-server-systemd"
-			#node.vm.box_url = "http://files.vagrantup.com/mastersin/basealt-p8-server.box"
-			#node.vm.box_url = "http://files.vagrantup.com/mastersin/basealt-p8-server-systemd.box"
+			node.vm.box = machine[:box]
 
 			node.vm.usable_port_range = (2250..2300)
 			node.vm.hostname = machine[:hostname]
