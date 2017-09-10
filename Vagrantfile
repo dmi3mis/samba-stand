@@ -20,14 +20,14 @@ hosts=[
 {
 	:box => "mastersin/basealt-p8-server-systemd",
 	:hostname => "server." + DOMAIN,
-	:ip => "dhcp", # PUBLIC_NET + "150"
+	:ip => "dhcp", # PUBLIC_NET + "150",
 	:ip_int => PRIVATE_NET + "2",
 	:ram => 1000
 },
 {
 	:box => "mastersin/basealt-p8-workstation",
 	:hostname => "client." + DOMAIN,
-	:ip => "dhcp", # PUBLIC_NET + "151"
+	:ip => "dhcp", # PUBLIC_NET + "151",
 	:ip_int => PRIVATE_NET + "3",
 	:ram => 1000,
 	:nameserver => PRIVATE_NET + "2"

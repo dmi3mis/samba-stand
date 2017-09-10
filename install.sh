@@ -20,7 +20,7 @@ set_nameserver()
 {
 	local iface="$(get_host_iface)"
 	local nameserver="$1"; shift
-	local domain="${1-}"; shift
+	local domain="${1-}"
 	if [ -n "$domain" ]; then
 		echo "domain $domain" > /etc/net/ifaces/$iface/resolv.conf
 		echo "search $domain" >> /etc/net/ifaces/$iface/resolv.conf
