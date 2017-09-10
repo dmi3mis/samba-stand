@@ -155,10 +155,7 @@ REALM="$(hostname -d | tr [a-z] [A-Z])"
 WORKGROUP=${REALM%%.*}
 PASSWORD='Pa$$word'
 
-COMMON_TOOLS="bind-utils krb5-kinit"
-
-# Due https://bugzilla.altlinux.org/show_bug.cgi?id=33427
-COMMON_TOOLS+=" ldb-tools"
+COMMON_TOOLS="bind-utils krb5-kinit ldb-tools"
 
 disable_clear_on_logout
 
@@ -173,7 +170,6 @@ case "$(hostname -s)" in
 		apt-get install -y -qq task-auth-ad-sssd
 		apt-get clean
 		init_krb5_conf "$REALM"
-		ln -s /usr/lib64/ldb/modules/ldb /usr/lib64/samba/ldb
 		if [ -n "$host_nameserver" ]; then
 			disable_networkmanager_dns
 			disable_dhcpcd_resolvconf_hook
