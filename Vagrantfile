@@ -3,15 +3,12 @@ PRIVATE_NET="192.168.56."
 DOMAIN="domain.alt"
 
 begin
+	Vagrant.require_version ">= 2.0.0"
+	COMPAT=""
+rescue
+	print("note: Current version of Vagrant is not support ALT Platforms with /etc/net.\n      Please, update Vagrant to version greater than 2.0.0\n")
 	Vagrant.require_version "<= 1.9.4"
 	COMPAT="true"
-rescue
-# Disable compat after ALT Platform support pull request
-# will be pushed and new version fo Vagrant will be relased:
-# https://github.com/mitchellh/vagrant/pull/8746
-#	Vagrant.require_version "> 1.9.6"
-	print("note: Current version of Vagrant is not support ALT Platforms with /etc/net yet.\n      Get patch from https://github.com/mitchellh/vagrant/pull/8746\n")
-	COMPAT=""
 end
 
 # Available ALT Platform p8 based boxes:
