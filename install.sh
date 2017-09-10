@@ -18,7 +18,7 @@ __EOF
 
 set_nameserver()
 {
-	local iface="eth2"
+	local iface="$(get_host_iface)"
 	local nameserver="$1"; shift
 	local domain="${1-}"; shift
 	if [ -n "$domain" ]; then
@@ -51,6 +51,16 @@ init_krb5_conf()
 	sed -i "s/#\?\(\s*dns_lookup_realm\s*=\s*\).*/\1false/" /etc/krb5.conf
 }
 
+update_smb_conf()
+{
+	local iface="$(get_host_iface)"
+	if grep -q '^\s*interfaces\s*=' /etc/samba/smb.conf; then
+		sed -i "s/\(\s*interfaces\s*=\).*/\1 lo $iface/" /etc/samba/smb.conf
+	else
+		sed -i "s/\(\[global\]\)/\1\n\tinterfaces = lo $iface/" /etc/samba/smb.conf
+	fi
+}
+
 get_ip()
 {
 	local ip="$1"
@@ -58,11 +68,48 @@ get_ip()
 	echo "$ip"
 }
 
+ip_link_grep_regexp='^[0-9]\+: \([[:alnum:]]\+\):'
+ip_link_sed_regexp='s/^[0-9]\+: \([[:alnum:]]\+\):.*/\1/g'
+ip_addr_awk_code='$1 == "inet" && $3 == "brd" { sub (/\/.*/,""); print $2 }'
+get_host_iface()
+{
+	local iface_name="eth2"
+	local iface_addr
+	ip link show | grep "$ip_link_grep_regexp" | sed "$ip_link_sed_regexp" | while read iface; do
+		iface_name="$iface"
+		iface_addr=$(ip addr show $iface | awk "$ip_addr_awk_code")
+		[ "$iface_addr" != "$host_ip" ] || break
+	done
+	echo $iface_name
+}
+
 disable_dhcpcd_resolvconf_hook()
 {
 	echo "nohook resolv.conf" >>/etc/dhcpcd.conf
 	iface_restart eth0
 	iface_restart eth1
+}
+
+set_etc_hosts()
+{
+	local ip="$1"; shift
+	local host="$1"; shift
+	local short="${host%%.*}"
+
+	if grep -w -q "^[.:0-9a-f]\+.*\s$host" /etc/hosts; then
+		sed -i "s/^\([.0-9a-f]\+.*\s$host\)/#\1/" /etc/hosts
+	fi
+
+	if grep -q "^$ip\s" /etc/hosts; then
+		sed -i "s/^\($ip\s\).*/\1$host $short/" /etc/hosts
+	else
+		echo -e "$ip\t$host $short" >>/etc/hosts
+	fi
+}
+
+disable_clear_on_logout()
+{
+	sed -i 's/^\(clear\)/#\1/' .bash_logout
 }
 
 compat="$1"; shift
@@ -92,8 +139,14 @@ COMMON_TOOLS="bind-utils krb5-kinit"
 # Due https://bugzilla.altlinux.org/show_bug.cgi?id=33427
 COMMON_TOOLS+=" ldb-tools"
 
+disable_clear_on_logout
+
 case "$(hostname -s)" in
 	client)
+		if rpm -q samba --queryformat= 2>/dev/null; then
+			service smb stop
+			chkconfig smb off
+		fi
 		apt-get install -y -qq samba-client sssd-ad $COMMON_TOOLS
 		apt-get clean
 		apt-get install -y -qq task-auth-ad-sssd
@@ -113,6 +166,8 @@ case "$(hostname -s)" in
 		init_krb5_conf "$REALM"
 		samba-tool domain provision --realm="$REALM" --domain "$WORKGROUP" --adminpass="$PASSWORD" --dns-backend=SAMBA_INTERNAL --server-role=dc --use-rfc2307 --host-ip="$host_ip"
 		disable_dhcpcd_resolvconf_hook
+		set_etc_hosts "$host_ip" "$host_name"
+		update_smb_conf
 		set_nameserver 127.0.0.1 "$DOMAIN"
 		service samba start
 		chkconfig samba on
