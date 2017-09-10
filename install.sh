@@ -70,17 +70,23 @@ get_ip()
 
 ip_link_grep_regexp='^[0-9]\+: \([[:alnum:]]\+\):'
 ip_link_sed_regexp='s/^[0-9]\+: \([[:alnum:]]\+\):.*/\1/g'
-ip_addr_awk_code='$1 == "inet" && $3 == "brd" { sub (/\/.*/,""); print $2 }'
 get_host_iface()
 {
 	local iface_name="eth2"
 	local iface_addr
 	ip link show | grep "$ip_link_grep_regexp" | sed "$ip_link_sed_regexp" | while read iface; do
 		iface_name="$iface"
-		iface_addr=$(ip addr show $iface | awk "$ip_addr_awk_code")
+		iface_addr=$(get_iface_ip "$iface")
 		[ "$iface_addr" != "$host_ip" ] || break
 	done
 	echo $iface_name
+}
+
+ip_addr_awk_code='$1 == "inet" && $3 == "brd" { sub (/\/.*/,""); print $2 }'
+get_iface_ip()
+{
+    local iface="$1"
+    ip addr show $iface | awk "$ip_addr_awk_code"
 }
 
 disable_dhcpcd_resolvconf_hook()
@@ -110,6 +116,21 @@ set_etc_hosts()
 disable_clear_on_logout()
 {
 	sed -i 's/^\(clear\)/#\1/' .bash_logout
+}
+
+disable_networkmanager_dns()
+{
+	test /etc/NetworkManager/NetworkManager.conf || return
+	if grep -q '^\s*dns\s*=' /etc/NetworkManager/NetworkManager.conf; then
+		sed -i "s/\(\s*dns\s*=\).*/\1=none/" /etc/NetworkManager/NetworkManager.conf
+	else
+		sed -i "s/\(\[main\]\)/\1\n\tdns=none/" /etc/NetworkManager/NetworkManager.conf
+	fi
+	systemctl restart NetworkManager
+	if resolvconf -l | grep -q NetworkManager; then
+		resolvconf -d NetworkManager
+	fi
+	resolvconf -u
 }
 
 compat="$1"; shift
@@ -154,6 +175,7 @@ case "$(hostname -s)" in
 		init_krb5_conf "$REALM"
 		ln -s /usr/lib64/ldb/modules/ldb /usr/lib64/samba/ldb
 		if [ -n "$host_nameserver" ]; then
+			disable_networkmanager_dns
 			disable_dhcpcd_resolvconf_hook
 			set_nameserver "$host_nameserver" "$DOMAIN"
 		fi
