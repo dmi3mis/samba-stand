@@ -2,13 +2,13 @@
 SambaDC stand based on Vagrant with Virtualbox provider 
 
 Using boxes:
-* https://atlas.hashicorp.com/mastersin/boxes/basealt-p8-server
-* https://atlas.hashicorp.com/mastersin/boxes/basealt-p8-server-systemd
+* https://app.vagrantup.com/mastersin/boxes/basealt-p8-server
+* https://app.vagrantup.com/mastersin/boxes/basealt-p8-server-systemd
+* https://app.vagrantup.com/mastersin/boxes/basealt-p8-workstation
 
-Supported vagrant version - [1.9.4 for Centos](
-https://releases.hashicorp.com/vagrant/1.9.4/vagrant_1.9.4_x86_64.rpm):
-* https://www.vagrantup.com/downloads.html
-* https://releases.hashicorp.com/vagrant/1.9.4/vagrant_1.9.4_x86_64.rpm
+Supported vagrant version - [2.0.0](
+https://releases.hashicorp.com/vagrant/2.0.0/vagrant_2.0.0_x86_64.rpm)
+or [later](https://www.vagrantup.com/downloads.html)
 
 Github and origin git repo on [git.alt](http://git.altlinux.org/):
 * https://github.com/mastersin/samba-stand
