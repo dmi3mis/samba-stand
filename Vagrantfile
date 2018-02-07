@@ -11,9 +11,10 @@ rescue
 	COMPAT="true"
 end
 
-# Available ALT Platform p8 based boxes:
+# Available ALT Platform based boxes:
 # "mastersin/basealt-p8-server"
 # "mastersin/basealt-p8-server-systemd"
+# "mastersin/sisyphus-server-systemd"
 # "mastersin/basealt-p8-workstation"
 
 hosts=[
