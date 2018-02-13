@@ -176,6 +176,8 @@ case "$(hostname -s)" in
 			disable_dhcpcd_resolvconf_hook
 			set_nameserver "$host_nameserver" "$DOMAIN"
 		fi
+		resolvconf -d eth0.dhcp
+		resolvconf -d eth1.dhcp
 		system-auth write ad $DOMAIN $HOST $WORKGROUP 'Administrator' "$PASSWORD"
 		;;
 	server)
